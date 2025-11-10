@@ -2,10 +2,11 @@
 文档处理模块：负责加载和分割文本文档
 支持多种文件格式：TXT, PDF, Word, Excel
 """
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from typing import List, Dict
 import os
 import mimetypes
+
 
 
 class DocumentProcessor:
