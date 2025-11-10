@@ -1,0 +1,619 @@
+/* 全局样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+}
+
+.container {
+    display: flex;
+    height: 100vh;
+    max-width: 1400px;
+    margin: 0 auto;
+    background: white;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.2);
+}
+
+/* 侧边栏 */
+.sidebar {
+    width: 300px;
+    background: #2d3748;
+    color: white;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #4a5568;
+}
+
+.sidebar-header h2 {
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+.sidebar-header p {
+    font-size: 14px;
+    color: #a0aec0;
+}
+
+.sidebar-section {
+    margin-bottom: 30px;
+}
+
+.sidebar-section h3 {
+    font-size: 16px;
+    margin-bottom: 15px;
+    color: #e2e8f0;
+}
+
+/* 按钮样式 */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+    margin: 5px 0;
+    width: 100%;
+}
+
+.btn-primary {
+    background: #4299e1;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #3182ce;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-secondary {
+    background: #4a5568;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #2d3748;
+}
+
+.btn-danger {
+    background: #e53e3e;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c53030;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 数据库列表 */
+.database-list {
+    margin-top: 10px;
+}
+
+.database-item {
+    background: #4a5568;
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.database-item:hover {
+    background: #5a6578;
+    transform: translateX(5px);
+}
+
+.database-item.active {
+    background: #4299e1;
+}
+
+.database-item-name {
+    font-weight: 500;
+    flex: 1;
+}
+
+.database-item-count {
+    font-size: 12px;
+    color: #a0aec0;
+    margin-left: 10px;
+}
+
+.database-item-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.database-item-actions button {
+    padding: 5px 10px;
+    font-size: 12px;
+    width: auto;
+    margin: 0;
+}
+
+.database-info {
+    margin-top: 15px;
+    padding: 15px;
+    background: #4a5568;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.document-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.database-selector {
+    padding: 8px 15px;
+    border: 2px solid #4299e1;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+    cursor: pointer;
+}
+
+/* 主内容区 */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #f7fafc;
+}
+
+.chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.chat-header {
+    padding: 20px;
+    background: white;
+    border-bottom: 2px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-header h3 {
+    font-size: 20px;
+    color: #2d3748;
+}
+
+.chat-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #f7fafc;
+}
+
+.welcome-message {
+    text-align: center;
+    padding: 50px 20px;
+    color: #718096;
+}
+
+.welcome-message h4 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: #2d3748;
+}
+
+.message {
+    margin: 15px 0;
+    display: flex;
+    align-items: flex-start;
+}
+
+.message.user {
+    justify-content: flex-end;
+}
+
+.message-content {
+    max-width: 70%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    word-wrap: break-word;
+}
+
+.message.user .message-content {
+    background: #4299e1;
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.message.assistant .message-content {
+    background: white;
+    color: #2d3748;
+    border: 1px solid #e2e8f0;
+    border-bottom-left-radius: 4px;
+}
+
+.message-header {
+    font-weight: 600;
+    margin-bottom: 5px;
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.message-text {
+    line-height: 1.6;
+}
+
+.retrieved-docs {
+    margin-top: 10px;
+    padding: 10px;
+    background: #edf2f7;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.retrieved-docs-title {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.retrieved-doc-item {
+    padding: 5px;
+    margin: 5px 0;
+    background: white;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.retrieved-doc-item:hover {
+    background: #e2e8f0;
+}
+
+/* 思考过程样式 */
+.thinking-section {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f0f4f8;
+    border-left: 3px solid #4299e1;
+    border-radius: 4px;
+}
+
+.thinking-header {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.thinking-content {
+    color: #4a5568;
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.thinking-content strong,
+.thinking-content b {
+    font-weight: 600;
+    color: #2d3748;
+}
+
+/* Markdown内容样式 */
+.answer-content {
+    line-height: 1.8;
+}
+
+.answer-content h1,
+.answer-content h2,
+.answer-content h3,
+.answer-content h4,
+.answer-content h5,
+.answer-content h6 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.answer-content h1 {
+    font-size: 24px;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 10px;
+}
+
+.answer-content h2 {
+    font-size: 20px;
+}
+
+.answer-content h3 {
+    font-size: 18px;
+}
+
+.answer-content p {
+    margin-bottom: 12px;
+}
+
+.answer-content strong,
+.answer-content b {
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.answer-content em,
+.answer-content i {
+    font-style: italic;
+}
+
+.answer-content code {
+    background: #edf2f7;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    color: #e53e3e;
+}
+
+.answer-content pre {
+    background: #2d3748;
+    color: #e2e8f0;
+    padding: 15px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 15px 0;
+}
+
+.answer-content pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+}
+
+.answer-content ul,
+.answer-content ol {
+    margin: 10px 0;
+    padding-left: 25px;
+}
+
+.answer-content li {
+    margin: 5px 0;
+}
+
+.answer-content blockquote {
+    border-left: 4px solid #4299e1;
+    padding-left: 15px;
+    margin: 15px 0;
+    color: #4a5568;
+    font-style: italic;
+}
+
+.answer-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+}
+
+.answer-content table th,
+.answer-content table td {
+    border: 1px solid #e2e8f0;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+.answer-content table th {
+    background: #f7fafc;
+    font-weight: 600;
+}
+
+.answer-content a {
+    color: #4299e1;
+    text-decoration: none;
+}
+
+.answer-content a:hover {
+    text-decoration: underline;
+}
+
+.error-message {
+    color: #e53e3e;
+    padding: 10px;
+    background: #fed7d7;
+    border-radius: 4px;
+}
+
+.chat-input-container {
+    padding: 20px;
+    background: white;
+    border-top: 2px solid #e2e8f0;
+    display: flex;
+    gap: 10px;
+}
+
+#chatInput {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    resize: none;
+    font-family: inherit;
+}
+
+#chatInput:focus {
+    outline: none;
+    border-color: #4299e1;
+}
+
+.chat-input-container .btn {
+    width: auto;
+    padding: 12px 30px;
+    align-self: flex-end;
+}
+
+/* 模态框 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: white;
+    margin: 10% auto;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #718096;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: #2d3748;
+}
+
+.modal-content h3 {
+    margin-bottom: 20px;
+    color: #2d3748;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #2d3748;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #4299e1;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.form-actions .btn {
+    width: auto;
+}
+
+/* 加载提示 */
+.loading-overlay {
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #4299e1;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 300px;
+    }
+    
+    .message-content {
+        max-width: 85%;
+    }
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
