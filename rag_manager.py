@@ -5,7 +5,7 @@ from rag_system import RAGSystem
 from database_manager import DatabaseManager
 from typing import Dict, Optional, List
 from document_processor import DocumentProcessor
-from embedding_model import DeepSeekEmbedding
+from embedding_model import Embedding
 import requests
 
 
@@ -39,7 +39,7 @@ class RAGManager:
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap
         )
-        self.embedding_model = DeepSeekEmbedding(
+        self.embedding_model = Embedding(
             base_url=ollama_url,
             model_name=chat_model
         )

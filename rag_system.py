@@ -2,7 +2,7 @@
 RAG系统主模块：整合文档处理、向量存储和检索生成
 """
 from document_processor import DocumentProcessor
-from embedding_model import DeepSeekEmbedding
+from embedding_model import Embedding
 from vector_store import VectorStore
 from typing import List, Dict, Optional
 import requests
@@ -37,7 +37,7 @@ class RAGSystem:
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap
         )
-        self.embedding_model = DeepSeekEmbedding(
+        self.embedding_model = Embedding(
             base_url=ollama_url,
             model_name=chat_model
         )

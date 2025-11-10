@@ -6,7 +6,7 @@ from typing import List
 import numpy as np
 
 
-class DeepSeekEmbedding:
+class Embedding:
     """嵌入模型类，使用本地BGE模型（DeepSeek没有embedding模型）"""
     
     def __init__(self, base_url: str = "http://localhost:11434", model_name: str = "deepseek-r1:8b"):

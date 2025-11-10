@@ -70,7 +70,7 @@ RAG系统
 ├── 文档处理层
 │   └── DocumentProcessor      # 文档加载、分块、元数据提取
 ├── 向量化层
-│   └── DeepSeekEmbedding      # 文本向量化（BGE模型）
+│   └── Embedding              # 文本向量化（BGE模型）
 ├── 存储层
 │   ├── VectorStore            # 向量数据库操作
 │   └── DatabaseManager        # 多数据库管理
