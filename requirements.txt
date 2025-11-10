@@ -1,0 +1,19 @@
+requests>=2.31.0
+chromadb>=0.4.0
+langchain>=0.1.0
+langchain-community>=0.0.10
+sentence-transformers>=2.2.0
+numpy>=1.24.0
+python-dotenv>=1.0.0
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+# 文档处理库
+pypdf>=3.0.0
+python-docx>=1.0.0
+openpyxl>=3.1.0
+pandas>=2.0.0
+pdfplumber>=0.10.0
+xlrd>=2.0.0  # 用于读取旧版Excel文件(.xls)
+python-pptx>=0.6.21  # 用于读取PowerPoint文件(.pptx)
+
