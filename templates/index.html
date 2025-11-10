@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG系统 - 检索增强生成</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.5/dist/purify.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>RAG系统</h2>
+                <p>检索增强生成</p>
+            </div>
+            
+            <!-- 数据库管理 -->
+            <div class="sidebar-section">
+                <h3>数据库管理</h3>
+                <button class="btn btn-primary" onclick="showCreateDatabaseModal()">+ 创建数据库</button>
+                <div class="database-list" id="databaseList">
+                    <!-- 数据库列表将在这里动态加载 -->
+                </div>
+            </div>
+            
+            <!-- 文档管理 -->
+            <div class="sidebar-section">
+                <h3>文档管理</h3>
+                <div class="document-actions">
+                    <label class="btn btn-secondary">
+                        📄 上传文件
+                        <input type="file" id="fileUpload" 
+                               style="display: none;" 
+                               accept=".txt,.pdf,.docx,.xlsx,.xls,.pptx"
+                               onchange="handleFileUpload(event)">
+                    </label>
+                    <button class="btn btn-secondary" onclick="showAddTextModal()">📝 添加文本</button>
+                    <p style="font-size: 12px; color: #a0aec0; margin-top: 5px;">
+                        支持格式: TXT, PDF, Word (.docx), Excel (.xlsx, .xls), PowerPoint (.pptx)
+                    </p>
+                </div>
+                <div id="currentDatabaseInfo" class="database-info">
+                    <p>请先选择数据库</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 聊天区域 -->
+            <div class="chat-container">
+                <div class="chat-header">
+                    <h3>聊天对话</h3>
+                    <select id="databaseSelector" class="database-selector" onchange="onDatabaseChange()">
+                        <option value="">请选择数据库</option>
+                    </select>
+                </div>
+                
+                <div class="chat-messages" id="chatMessages">
+                    <div class="welcome-message">
+                        <h4>欢迎使用RAG系统</h4>
+                        <p>请先选择一个数据库，然后开始对话</p>
+                    </div>
+                </div>
+                
+                <div class="chat-input-container">
+                    <textarea 
+                        id="chatInput" 
+                        placeholder="输入您的问题..." 
+                        rows="3"
+                        onkeydown="handleChatInputKeydown(event)"
+                    ></textarea>
+                    <button class="btn btn-primary" onclick="sendMessage()">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 创建数据库模态框 -->
+    <div id="createDatabaseModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCreateDatabaseModal()">&times;</span>
+            <h3>创建新数据库</h3>
+            <form onsubmit="createDatabase(event)">
+                <div class="form-group">
+                    <label>数据库名称:</label>
+                    <input type="text" id="databaseName" required placeholder="请输入数据库名称">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateDatabaseModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">创建</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 添加文本模态框 -->
+    <div id="addTextModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddTextModal()">&times;</span>
+            <h3>添加文本内容</h3>
+            <form onsubmit="addText(event)">
+                <div class="form-group">
+                    <label>文本内容:</label>
+                    <textarea id="textContent" rows="10" required placeholder="请输入文本内容..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddTextModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 加载提示 -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+        <p>处理中...</p>
+    </div>
+    
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
+
