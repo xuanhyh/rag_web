@@ -3,7 +3,7 @@ const API_BASE = '/api';
 
 // 当前选中的数据库
 let currentDatabase = null;
-let chatHistory = [];
+// 注意：chatHistory 不再在前端维护，而是从后端获取
 
 // 页面加载时初始化
 document.addEventListener('DOMContentLoaded', function() {
@@ -62,10 +62,17 @@ async function loadDatabases() {
 // 选择数据库
 async function selectDatabase(databaseName) {
     currentDatabase = databaseName;
-    chatHistory = []; // 清空聊天历史
     await loadDatabases();
     updateDatabaseInfo(databaseName);
-    clearChatMessages();
+    // 加载该数据库的对话历史
+    await loadChatHistory(databaseName);
+    // 显示/隐藏清除历史按钮
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    if (databaseName) {
+        clearHistoryBtn.style.display = 'block';
+    } else {
+        clearHistoryBtn.style.display = 'none';
+    }
     showMessage(`已切换到数据库: ${databaseName}`, 'success');
 }
 
@@ -77,9 +84,10 @@ function onDatabaseChange() {
         selectDatabase(selectedDatabase);
     } else {
         currentDatabase = null;
-        chatHistory = [];
         document.getElementById('currentDatabaseInfo').innerHTML = '<p>请先选择数据库</p>';
         clearChatMessages();
+        // 隐藏清除历史按钮
+        document.getElementById('clearHistoryBtn').style.display = 'none';
     }
 }
 
@@ -151,8 +159,8 @@ async function deleteDatabase(databaseName) {
             showMessage('数据库删除成功', 'success');
             if (currentDatabase === databaseName) {
                 currentDatabase = null;
-                chatHistory = [];
                 clearChatMessages();
+                document.getElementById('clearHistoryBtn').style.display = 'none';
             }
             await loadDatabases();
         } else {
@@ -262,6 +270,75 @@ async function addText(event) {
     }
 }
 
+// 加载对话历史
+async function loadChatHistory(databaseName) {
+    try {
+        const response = await fetch(`${API_BASE}/databases/${databaseName}/chat/history`);
+        const result = await response.json();
+        
+        if (result.success && result.history && result.history.length > 0) {
+            // 清空当前聊天消息
+            clearChatMessages();
+            
+            // 渲染历史消息
+            const chatMessages = document.getElementById('chatMessages');
+            const welcomeMessage = chatMessages.querySelector('.welcome-message');
+            if (welcomeMessage) {
+                welcomeMessage.remove();
+            }
+            
+            // 按照历史记录渲染消息
+            result.history.forEach(msg => {
+                if (msg.role === 'user' || msg.role === 'assistant') {
+                    addChatMessage(msg.role, msg.content, false); // false表示不滚动到底部
+                }
+            });
+            
+            // 最后滚动到底部
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        } else {
+            // 没有历史，显示欢迎消息
+            clearChatMessages();
+        }
+    } catch (error) {
+        console.error('加载对话历史失败:', error);
+        // 如果加载失败，清空消息
+        clearChatMessages();
+    }
+}
+
+// 清除对话历史
+async function clearChatHistory() {
+    if (!currentDatabase) {
+        return;
+    }
+    
+    if (!confirm('确定要清除当前对话历史吗？此操作不可恢复！')) {
+        return;
+    }
+    
+    showLoading(true);
+    try {
+        const response = await fetch(`${API_BASE}/databases/${currentDatabase}/chat/history`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+            showMessage('对话历史已清除', 'success');
+            clearChatMessages();
+        } else {
+            showMessage(result.detail || '清除对话历史失败', 'error');
+        }
+    } catch (error) {
+        console.error('清除对话历史失败:', error);
+        showMessage('清除对话历史失败', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
 // 发送消息（流式）
 async function sendMessage() {
     const input = document.getElementById('chatInput');
@@ -280,8 +357,7 @@ async function sendMessage() {
     addChatMessage('user', query);
     input.value = '';
     
-    // 添加用户消息到历史
-    chatHistory.push({ role: 'user', content: query });
+    // 注意：不再在前端维护chatHistory，后端会自动管理
     
     // 创建助手消息容器（用于流式更新）
     const assistantMessageId = 'assistant-' + Date.now();
@@ -327,7 +403,7 @@ async function sendMessage() {
                 database_name: currentDatabase,
                 query: query,
                 n_results: 5,
-                history: chatHistory
+                history: [] // 不发送历史，后端会自动管理
             })
         });
         
@@ -431,8 +507,7 @@ async function sendMessage() {
                             answerHtml += `<div class="answer-content">${sanitizedHtml}</div>`;
                             answerElement.innerHTML = answerHtml;
                             
-                            // 添加到历史
-                            chatHistory.push({ role: 'assistant', content: fullContent });
+                            // 注意：历史由后端管理，不需要在前端添加
                             chatMessages.scrollTop = chatMessages.scrollHeight;
                             break;
                         } else if (data.type === 'error') {
@@ -460,7 +535,7 @@ function escapeHtml(text) {
 }
 
 // 添加聊天消息
-function addChatMessage(role, content) {
+function addChatMessage(role, content, scrollToBottom = true) {
     const chatMessages = document.getElementById('chatMessages');
     
     // 移除欢迎消息
@@ -498,7 +573,9 @@ function addChatMessage(role, content) {
     `;
     
     chatMessages.appendChild(messageDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    if (scrollToBottom) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 }
 
 // 清空聊天消息

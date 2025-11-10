@@ -38,6 +38,10 @@ rag_manager = RAGManager(
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+# 对话历史管理（数据库名称 -> 对话历史列表）
+# 使用字典存储，每个数据库维护独立的对话历史
+chat_histories: Dict[str, List[Dict]] = {}
+
 
 # Pydantic模型
 class DatabaseCreate(BaseModel):
@@ -122,6 +126,9 @@ async def delete_database(database_name: str):
     try:
         success = rag_manager.delete_database(database_name)
         if success:
+            # 同时删除该数据库的对话历史
+            if database_name in chat_histories:
+                del chat_histories[database_name]
             return {"success": True, "message": "数据库删除成功"}
         else:
             raise HTTPException(status_code=404, detail="数据库不存在")
@@ -242,24 +249,98 @@ async def query_database(request: QueryRequest):
 @app.post("/api/chat")
 async def chat(request: QueryRequest):
     """聊天接口（与query相同，为了前端统一）"""
-    return await query_database(request)
+    # 获取或初始化该数据库的对话历史
+    if request.database_name not in chat_histories:
+        chat_histories[request.database_name] = []
+    
+    # 始终使用存储的历史（前端不应该发送历史，而是从后端获取）
+    # 这样可以确保历史的一致性
+    current_history = chat_histories[request.database_name].copy()
+    
+    # 使用存储的历史进行查询
+    result = rag_manager.query_database(
+        database_name=request.database_name,
+        query=request.query,
+        n_results=request.n_results,
+        history=current_history
+    )
+    
+    # 更新对话历史
+    if result.get("success", True) and result.get("answer"):
+        chat_histories[request.database_name].append({"role": "user", "content": request.query})
+        chat_histories[request.database_name].append({"role": "assistant", "content": result.get("answer", "")})
+        # 限制历史长度（保留最近20轮对话）
+        if len(chat_histories[request.database_name]) > 40:
+            chat_histories[request.database_name] = chat_histories[request.database_name][-40:]
+    
+    return result
+
+
+@app.get("/api/databases/{database_name}/chat/history")
+async def get_chat_history(database_name: str):
+    """获取数据库的对话历史"""
+    try:
+        # 如果数据库不存在，返回空历史
+        if database_name not in chat_histories:
+            chat_histories[database_name] = []
+        return {
+            "success": True,
+            "database_name": database_name,
+            "history": chat_histories[database_name],
+            "message_count": len(chat_histories[database_name])
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/databases/{database_name}/chat/history")
+async def clear_chat_history(database_name: str):
+    """清除数据库的对话历史"""
+    try:
+        if database_name in chat_histories:
+            chat_histories[database_name] = []
+        return {
+            "success": True,
+            "message": "对话历史已清除"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/chat/stream")
 async def chat_stream(request: QueryRequest):
     """流式聊天接口"""
+    # 获取或初始化该数据库的对话历史
+    if request.database_name not in chat_histories:
+        chat_histories[request.database_name] = []
+    
+    # 始终使用存储的历史（前端不应该发送历史，而是从后端获取）
+    # 这样可以确保历史的一致性
+    current_history = chat_histories[request.database_name].copy()
+    
     async def generate():
         try:
+            full_content = ""
             # 使用流式查询
             for chunk in rag_manager.query_database_stream(
                 database_name=request.database_name,
                 query=request.query,
                 n_results=request.n_results,
-                history=request.history
+                history=current_history
             ):
                 # 转换为SSE格式
                 data = json.dumps(chunk, ensure_ascii=False)
                 yield f"data: {data}\n\n"
+                
+                # 如果完成，更新对话历史
+                if chunk.get("type") == "done":
+                    full_content = chunk.get("full_content", "")
+                    # 更新对话历史
+                    chat_histories[request.database_name].append({"role": "user", "content": request.query})
+                    chat_histories[request.database_name].append({"role": "assistant", "content": full_content})
+                    # 限制历史长度（保留最近20轮对话）
+                    if len(chat_histories[request.database_name]) > 40:
+                        chat_histories[request.database_name] = chat_histories[request.database_name][-40:]
         except Exception as e:
             error_data = json.dumps({
                 "type": "error",

@@ -54,9 +54,14 @@
             <div class="chat-container">
                 <div class="chat-header">
                     <h3>聊天对话</h3>
-                    <select id="databaseSelector" class="database-selector" onchange="onDatabaseChange()">
-                        <option value="">请选择数据库</option>
-                    </select>
+                    <div class="chat-header-actions">
+                        <select id="databaseSelector" class="database-selector" onchange="onDatabaseChange()">
+                            <option value="">请选择数据库</option>
+                        </select>
+                        <button id="clearHistoryBtn" class="btn btn-secondary" onclick="clearChatHistory()" style="display: none; width: auto; padding: 8px 15px; margin-left: 10px;">
+                            🔄 重新开始对话
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="chat-messages" id="chatMessages">

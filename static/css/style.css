@@ -205,6 +205,12 @@ body {
     color: #2d3748;
 }
 
+.chat-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .chat-messages {
     flex: 1;
     padding: 20px;
