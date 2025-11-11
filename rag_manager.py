@@ -130,6 +130,7 @@ class RAGManager:
     def query_database(self, database_name: str, query: str, n_results: int = 5, history: List[Dict] = None) -> Dict:
         """
         查询指定数据库
+        检索指定数据库，结合检索到的内容增强prompt，用deepseek根据prompt生成回答
         
         Args:
             database_name: 数据库名称
@@ -208,6 +209,8 @@ class RAGManager:
     def query_database_stream(self, database_name: str, query: str, n_results: int = 5, history: List[Dict] = None):
         """
         流式查询指定数据库（生成器函数）
+        与 query_database() 方法作用基本一致，但query_database() 是非流式的，一次性生成整个回答；
+        而 query_database_stream() 是流式的，以生成器的方式逐步返回回答。
         
         Args:
             database_name: 数据库名称

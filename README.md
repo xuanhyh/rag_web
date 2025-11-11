@@ -442,15 +442,15 @@ Content-Type: application/json
 
 ```
 rag_web/
-├── api.py                    # FastAPI后端接口
+├── api.py                    # FastAPI后端，提供RAG系统的Web API接口
 ├── main.py                   # 命令行主程序
 ├── start_web.py              # Web服务器启动脚本
-├── rag_system.py             # RAG系统核心模块
-├── rag_manager.py            # RAG管理器（多数据库）
-├── document_processor.py     # 文档处理模块
-├── embedding_model.py        # 嵌入模型模块
-├── vector_store.py           # 向量数据库模块
-├── database_manager.py       # 数据库管理模块
+├── rag_system.py             # RAG系统主模块，整合文档处理、向量存储和检索生成
+├── rag_manager.py            # RAG管理器，管理多个RAG系统实例，支持多数据库
+├── document_processor.py     # 文档处理模块，负责加载和分割文本文档，支持多种格式
+├── embedding_model.py        # 嵌入模型模块，使用本地BGE模型进行文本嵌入
+├── vector_store.py           # 向量数据库模块，使用ChromaDB存储和检索向量
+├── database_manager.py       # 数据库管理模块，管理多个向量数据库集合
 ├── requirements.txt          # Python依赖
 ├── README.md                 # 项目说明文档
 ├── QUICKSTART.md             # 快速开始指南
@@ -498,25 +498,4 @@ rag_web/
 6. **内存占用**：BGE模型会占用约1-2GB内存，请确保系统有足够内存
 7. **文件格式**：支持的文件格式有限，请确保文件格式正确
 
-## 📄 许可证
 
-MIT License
-
-## 🙏 致谢
-
-- [ChromaDB](https://www.trychroma.com/) - 向量数据库
-- [BAAI/bge-large-zh-v1.5](https://huggingface.co/BAAI/bge-large-zh-v1.5) - 中文嵌入模型
-- [DeepSeek](https://www.deepseek.com/) - 大语言模型
-- [Ollama](https://ollama.ai/) - 模型部署工具
-- [FastAPI](https://fastapi.tiangolo.com/) - Web框架
-- [LangChain](https://www.langchain.com/) - LLM应用框架
-
-## 📞 技术支持
-
-如有问题，请检查：
-1. 控制台错误信息
-2. 浏览器控制台（F12）
-3. 服务器日志
-4. 项目文档和故障排除部分
-
-祝您使用愉快！
