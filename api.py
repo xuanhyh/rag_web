@@ -27,14 +27,11 @@ app.add_middleware(
 )
 
 # 初始化RAG管理器
-from pathlib import Path
-
 rag_manager = RAGManager(
     ollama_url="http://localhost:11434",
     chat_model="deepseek-r1:8b",
     chunk_size=500,
-    chunk_overlap=50,
-    plot_output_dir=str(Path(__file__).parent / "static" / "plots")
+    chunk_overlap=50
 )
 
 # 临时文件目录

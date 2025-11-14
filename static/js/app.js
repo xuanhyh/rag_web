@@ -392,29 +392,6 @@ async function sendMessage() {
     let fullContent = '';
     let thinkingContent = '';
     let retrievedDocs = [];
-    let rewrittenQuery = null;
-    let plotUrl = null;
-
-    const buildHeaderHtml = () => {
-        let headerHtml = '';
-        if (rewrittenQuery && rewrittenQuery !== query) {
-            headerHtml += `
-                <div class="rewritten-query">
-                    检索改写：${escapeHtml(rewrittenQuery)}
-                </div>
-            `;
-        }
-        if (plotUrl) {
-            const cacheBuster = Date.now();
-            headerHtml += `
-                <div class="relevance-plot">
-                    <div class="relevance-plot-title">文档相关性柱状图</div>
-                    <img src="${plotUrl}?t=${cacheBuster}" alt="文档相关性柱状图" />
-                </div>
-            `;
-        }
-        return headerHtml;
-    };
     
     try {
         const response = await fetch(`${API_BASE}/chat/stream`, {
@@ -452,13 +429,10 @@ async function sendMessage() {
                         const data = JSON.parse(line.slice(6));
                         
                         if (data.type === 'documents') {
-                            rewrittenQuery = data.rewritten_query || null;
-                            plotUrl = data.relevance_plot_url || null;
                             // 显示检索到的文档
                             retrievedDocs = data.documents || [];
                             if (retrievedDocs.length > 0) {
                                 const docsHtml = `
-                                    ${buildHeaderHtml()}
                                     <div class="retrieved-docs">
                                         <div class="retrieved-docs-title">参考文档 (${retrievedDocs.length}):</div>
                                         ${retrievedDocs.map((doc, idx) => `
@@ -487,9 +461,9 @@ async function sendMessage() {
                             const sanitizedHtml = DOMPurify.sanitize(markdownHtml);
                             
                             // 更新回答部分
-                            let answerHtml = buildHeaderHtml();
+                            let answerHtml = '';
                             if (retrievedDocs.length > 0) {
-                                answerHtml += `
+                                answerHtml = `
                                     <div class="retrieved-docs">
                                         <div class="retrieved-docs-title">参考文档 (${retrievedDocs.length}):</div>
                                         ${retrievedDocs.map((doc, idx) => `
@@ -518,9 +492,8 @@ async function sendMessage() {
                             const sanitizedHtml = DOMPurify.sanitize(markdownHtml);
                             
                             let answerHtml = '';
-                            answerHtml += buildHeaderHtml();
                             if (retrievedDocs.length > 0) {
-                                answerHtml += `
+                                answerHtml = `
                                     <div class="retrieved-docs">
                                         <div class="retrieved-docs-title">参考文档 (${retrievedDocs.length}):</div>
                                         ${retrievedDocs.map((doc, idx) => `
