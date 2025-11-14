@@ -1,15 +1,17 @@
 """
 RAG管理器：管理多个RAG系统实例，支持多数据库
 """
-from rag_system import RAGSystem
+import time
+from pathlib import Path
+from typing import Dict, List, Optional
+
+from rag_pipeline import BaseRAGPipeline
 from database_manager import DatabaseManager
-from typing import Dict, Optional, List
 from document_processor import DocumentProcessor
 from embedding_model import Embedding
-import requests
 
 
-class RAGManager:
+class RAGManager(BaseRAGPipeline):
     """管理多个RAG系统，支持切换不同的数据库"""
     
     def __init__(
@@ -17,7 +19,13 @@ class RAGManager:
         ollama_url: str = "http://localhost:11434",
         chat_model: str = "deepseek-r1:8b",
         chunk_size: int = 500,
-        chunk_overlap: int = 50
+        chunk_overlap: int = 50,
+        enable_query_rewrite: bool = True,
+        enable_rerank: bool = True,
+        reranker_model_name: str = "BAAI/bge-reranker-large",
+        retrieval_multiplier: float = 1.8,
+        max_retrieve_results: int = 15,
+        plot_output_dir: Optional[str] = "./static/plots",
     ):
         """
         初始化RAG管理器
@@ -28,8 +36,15 @@ class RAGManager:
             chunk_size: 文本块大小
             chunk_overlap: 文本块重叠大小
         """
-        self.ollama_url = ollama_url
-        self.chat_model = chat_model
+        super().__init__(
+            ollama_url=ollama_url,
+            chat_model=chat_model,
+            enable_query_rewrite=enable_query_rewrite,
+            enable_rerank=enable_rerank,
+            reranker_model_name=reranker_model_name,
+            retrieval_multiplier=retrieval_multiplier,
+            max_retrieve_results=max_retrieve_results,
+        )
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         
@@ -46,6 +61,12 @@ class RAGManager:
         
         # 当前使用的数据库名称
         self.current_database: Optional[str] = None
+        self.plot_output_dir: Optional[Path] = Path(plot_output_dir).resolve() if plot_output_dir else None
+        self.plot_output_url_prefix = "/static/plots" if self.plot_output_dir else None
+        self._latest_plot_paths: Dict[str, Path] = {}
+
+        if self.plot_output_dir:
+            self.plot_output_dir.mkdir(parents=True, exist_ok=True)
     
     def list_databases(self) -> List[Dict]:
         """列出所有数据库"""
@@ -150,55 +171,18 @@ class RAGManager:
             }
         
         try:
-            # 获取查询向量
-            query_embedding = self.embedding_model.embed_query(query)
-            
-            # 搜索相似文档
-            retrieved_docs = vector_store.search(query_embedding, n_results=n_results)
-            
-            # 构建上下文
-            context = "\n\n".join([
-                f"[文档{i+1}]\n{doc['content']}"
-                for i, doc in enumerate(retrieved_docs)
-            ]) if retrieved_docs else "未找到相关文档"
-            
-            # 生成回答
-            prompt = f"""基于以下上下文信息回答问题。如果上下文中没有相关信息，请基于你的知识回答。
-
-上下文信息：
-{context}
-
-用户问题：{query}
-
-请提供准确、详细的回答："""
-            
-            messages = history.copy() if history else []
-            messages.append({"role": "user", "content": prompt})
-            
-            # 调用Ollama API
-            response = requests.post(
-                url=f"{self.ollama_url}/api/chat",
-                json={
-                    "model": self.chat_model,
-                    "messages": messages,
-                    "stream": False
-                },
-                timeout=60
+            pipeline_result = self.run_pipeline(
+                vector_store=vector_store,
+                user_query=query,
+                n_results=n_results,
+                history=history,
             )
-            
-            if response.status_code == 200:
-                data = response.json()
-                answer = data.get("message", {}).get("content", "")
-            else:
-                answer = f"生成回答失败: {response.status_code}"
-            
-            return {
-                "success": True,
-                "query": query,
-                "retrieved_documents": retrieved_docs,
-                "context": context,
-                "answer": answer
-            }
+            pipeline_result["success"] = True
+
+            plot_info = self._generate_relevance_plot(database_name, pipeline_result["retrieved_documents"], n_results)
+            if plot_info:
+                pipeline_result.update(plot_info)
+            return pipeline_result
         except Exception as e:
             return {
                 "success": False,
@@ -230,49 +214,28 @@ class RAGManager:
             return
         
         try:
-            # 获取查询向量
-            query_embedding = self.embedding_model.embed_query(query)
-            
-            # 搜索相似文档
-            retrieved_docs = vector_store.search(query_embedding, n_results=n_results)
-            
-            # 构建上下文
-            context = "\n\n".join([
-                f"[文档{i+1}]\n{doc['content']}"
-                for i, doc in enumerate(retrieved_docs)
-            ]) if retrieved_docs else "未找到相关文档"
+            rewritten_query = self.rewrite_query(query)
+            retrieve_k = self._calc_retrieve_count(n_results)
+            initial_docs = self.retrieve_documents(vector_store, rewritten_query, retrieve_k)
+            retrieved_docs = self.rerank_documents(query, initial_docs, n_results)
+            context = self.build_context(retrieved_docs)
+            plot_info = self._generate_relevance_plot(database_name, retrieved_docs, n_results)
             
             # 发送检索到的文档信息
             yield {
                 "type": "documents",
+                "rewritten_query": rewritten_query,
                 "documents": retrieved_docs,
-                "context": context
+                "initial_documents": initial_docs,
+                "context": context,
+                **(plot_info or {})
             }
             
-            # 构建提示词
-            prompt = f"""基于以下上下文信息回答问题。如果上下文中没有相关信息，请基于你的知识回答。
-
-上下文信息：
-{context}
-
-用户问题：{query}
-
-请提供准确、详细的回答："""
-            
             messages = history.copy() if history else []
-            messages.append({"role": "user", "content": prompt})
+            messages.append({"role": "user", "content": self.build_prompt(query, context)})
             
             # 调用Ollama API（流式）
-            response = requests.post(
-                url=f"{self.ollama_url}/api/chat",
-                json={
-                    "model": self.chat_model,
-                    "messages": messages,
-                    "stream": True
-                },
-                stream=True,
-                timeout=60
-            )
+            response = self._call_llm(messages, stream=True)
             
             if response.status_code == 200:
                 # 流式处理响应
@@ -367,4 +330,44 @@ class RAGManager:
         
         documents = vector_store.get_all_documents()
         return documents[:limit] if limit else documents
+
+    def _generate_relevance_plot(self, database_name: str, documents: List[Dict], n_results: int) -> Optional[Dict]:
+        """
+        生成并保存文档相关性柱状图，返回包含路径和可访问URL的字典。
+        """
+        if not self.plot_output_dir or not self.plot_output_url_prefix or not documents:
+            return None
+
+        try:
+            filename = f"{database_name}_{int(time.time() * 1000)}.png"
+            save_path = self.plot_output_dir / filename
+
+            # 生成图像
+            self.plot_document_relevance(
+                documents=documents,
+                top_k=min(10, n_results),
+                show=False,
+                save_path=str(save_path),
+            )
+
+            # 删除旧图像
+            previous_path = self._latest_plot_paths.get(database_name)
+            if previous_path and previous_path.exists():
+                try:
+                    previous_path.unlink()
+                except Exception as exc:
+                    print(f"[警告] 删除旧的相关性图失败: {exc}")
+
+            self._latest_plot_paths[database_name] = save_path
+            url = f"{self.plot_output_url_prefix}/{filename}"
+
+            return {
+                "relevance_plot_path": str(save_path),
+                "relevance_plot_url": url,
+            }
+        except Exception as exc:
+            print(f"[警告] 绘制相关性图失败: {exc}")
+            return {
+                "relevance_plot_error": str(exc),
+            }
 
