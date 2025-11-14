@@ -82,6 +82,10 @@ def main():
                     print("\n正在检索相关文档...")
                     result = rag.query(query, n_results=5, history=conversation_history)
                     
+                    rewritten_query = result.get("rewritten_query")
+                    if rewritten_query and rewritten_query != query:
+                        print(f"\n改写后的查询：{rewritten_query}")
+
                     # 显示检索到的文档
                     if result["retrieved_documents"]:
                         print("\n检索到的相关文档:")
@@ -89,8 +93,20 @@ def main():
                         for i, doc in enumerate(result["retrieved_documents"][:3], 1):
                             print(f"\n[文档 {i}]")
                             print(f"来源: {doc['metadata'].get('file_name', doc['metadata'].get('source', '未知'))}")
-                            print(f"相似度: {1 - doc.get('distance', 0):.4f}")
+                            distance = doc.get('distance')
+                            if distance is not None:
+                                print(f"相似度: {1 - distance:.4f}")
+                            if doc.get("rerank_score") is not None:
+                                print(f"重排得分: {doc['rerank_score']:.4f}")
                             print(f"内容预览: {doc['content'][:200]}...")
+
+                        # 绘制文档相关性柱状图（前10个文档）
+                        try:
+                            rag.plot_document_relevance(result["retrieved_documents"], top_k=10, show=True)
+                        except ImportError as e:
+                            print(f"绘制相关性图失败（缺少依赖）: {e}")
+                        except Exception as e:
+                            print(f"绘制相关性图失败: {str(e)}")
                     
                     # 显示生成的回答
                     print("\n" + "="*50)
